@@ -16,7 +16,6 @@ pub enum Token {
     EOF,
 }
 
-
 pub struct Lexer {
     input: Vec<char>,
     pos: usize

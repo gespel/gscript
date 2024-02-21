@@ -2,14 +2,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use serde_json::Value;
 use serde::{Deserialize, Serialize};
-
 #[derive(Serialize, Deserialize)]
 struct JsonSynthEntry {
     synth_type: String,
     frequency: f32,
     name: String
 }
-
 struct SynthAction {
     frequency: f32,
     name: String,
@@ -17,7 +15,6 @@ struct SynthAction {
     end_time: usize
 
 }
-
 pub struct ScriptParser {
     path: String,
     files: Vec<String>,
