@@ -36,13 +36,13 @@ impl Interpreter {
         let mut result = self.terminal();
         self.line_index += 1;
         loop {
+            if self.peak(Token::EOL) {
+                break;
+            }
             self.eat(Token::Plus);
             let result2 = self.terminal();
             self.line_index += 1;
             result += result2;
-            if self.peak(Token::EOL) {
-                break;
-            }
         }
         result
     }
