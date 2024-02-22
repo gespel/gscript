@@ -18,6 +18,35 @@ impl Interpreter {
         }
     }
 
+    fn terminal(&mut self) -> f64 {
+        match self.tokens[self.line_index].clone() {
+            Token::Number(nr) => {
+                return nr
+            }
+            Token::Identifier(var_name) => {
+                self.variables.get(&var_name).unwrap().clone()
+            }
+            _ => {
+                panic!("Terminal parsing Error! Expected terminal but got {:?} instead!", self.tokens[self.line_index].clone());
+            }
+        }
+    }
+
+    fn expression(&mut self) -> f64 {
+        let mut result = self.terminal();
+        self.line_index += 1;
+        loop {
+            self.eat(Token::Plus);
+            let result2 = self.terminal();
+            self.line_index += 1;
+            result += result2;
+            if self.peak(Token::EOL) {
+                break;
+            }
+        }
+        result
+    }
+
     fn function_definition(&mut self) {
         if let Token::Identifier(fn_name) = self.tokens[self.line_index].clone() {
             self.line_index += 1;
@@ -39,76 +68,20 @@ impl Interpreter {
     }
 
     pub fn interpret(&mut self) {
-        println!("{:?}", self.tokens[self.line_index].clone());
         if let Token::Identifier(ident) = self.tokens[self.line_index].clone() {
             self.line_index += 1;
             match ident.as_str() {
+                //function definition
                 "fn" => {
                     self.function_definition();
                 }
+
                 var_name => {
-                    //variable assignment
                     if self.peak(Token::Assign) {
                         self.eat(Token::Assign);
-                        match self.tokens[self.line_index].clone() {
-                            Token::Number(assign_nr) => {
-                                self.variables.insert(var_name.parse().unwrap(), assign_nr);
-                            }
-                            Token::Plus => {
-
-                            }
-                            Token::Minus => {}
-                            Token::Multiply => {}
-                            Token::Divide => {}
-                            Token::LeftParen => {}
-                            Token::RightParen => {}
-                            Token::Identifier(var2) => {
-                                self.line_index += 1;
-                                self.eat(Token::Plus);
-                                match self.tokens[self.line_index].clone() {
-                                    Token::Number(add_nr) => {
-                                        self.variables.insert(var_name.parse().unwrap(), self.variables.get(&var2).unwrap().clone() + add_nr);
-                                    }
-                                    Token::Plus => {}
-                                    Token::Minus => {}
-                                    Token::Multiply => {}
-                                    Token::Divide => {}
-                                    Token::LeftParen => {}
-                                    Token::RightParen => {}
-                                    Token::Identifier(var3) => {
-                                        self.variables.insert(
-                                            var_name.parse().unwrap(),
-                                            self.variables.get(&var2).unwrap().clone() + self.variables.get(&var3).unwrap().clone()
-                                        );
-                                    }
-                                    Token::LeftBrack => {}
-                                    Token::RightBrack => {}
-                                    Token::Comma => {}
-                                    Token::Assign => {}
-                                    Token::EOL => {}
-                                    Token::EOF => {}
-                                }
-                            }
-                            Token::LeftBrack => {}
-                            Token::RightBrack => {}
-                            Token::Comma => {}
-                            Token::Assign => {}
-                            Token::EOL => {}
-                            Token::EOF => {}
-                        }
-                        self.line_index += 1;
-                        /*if let Token::Number(var_value) = self.tokens[self.line_index].clone() {
-                            self.variables.insert(var_name.parse().unwrap(), var_value);
-                        }
-                        if let Token::Identifier(var2_name) = self.tokens[self.line_index].clone() {
-                            self.line_index += 1;
-                            self.eat(Token::Plus);
-                            if let Token::Number(add) = self.tokens[self.line_index].clone() {
-                                self.line_index += 1;
-                                self.variables.insert(var_name.parse().unwrap(), self.variables.get(&var2_name).unwrap().clone() + add);
-                            }
-
-                        }*/
+                        let result = self.expression();
+                        self.variables.insert(var_name.parse().unwrap(), result);
+                        //variable assignment
                     }
                     //function call
                     if self.peak(Token::LeftParen) {
