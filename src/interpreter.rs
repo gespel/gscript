@@ -24,7 +24,20 @@ impl Interpreter {
                 return nr
             }
             Token::Identifier(var_name) => {
-                self.variables.get(&var_name).unwrap().clone()
+                if self.peak(Token::LeftParen, 1) {
+                    0f64
+                }
+                else {
+                    self.variables.get(&var_name).unwrap().clone()
+                }
+
+            }
+            Token::LeftParen => {
+                self.eat(Token::LeftParen);
+                let result = self.expression();
+                self.eat(Token::RightParen);
+                self.decrease_line_index();
+                result
             }
             _ => {
                 panic!("Terminal parsing Error! Expected terminal but got {:?} instead!", self.tokens[self.line_index].clone());
@@ -34,14 +47,14 @@ impl Interpreter {
 
     fn expression(&mut self) -> f64 {
         let mut result = self.terminal();
-        self.line_index += 1;
+        self.increase_line_index();
         loop {
-            if self.peak(Token::EOL) {
+            if self.peak(Token::EOL, 0) || self.peak(Token::RightParen, 0) {
                 break;
             }
             self.eat(Token::Plus);
             let result2 = self.terminal();
-            self.line_index += 1;
+            self.increase_line_index();
             result += result2;
         }
         result
@@ -49,7 +62,7 @@ impl Interpreter {
 
     fn function_definition(&mut self) {
         if let Token::Identifier(fn_name) = self.tokens[self.line_index].clone() {
-            self.line_index += 1;
+            self.increase_line_index();
             self.eat(Token::LeftParen);
             self.eat(Token::RightParen);
             self.eat(Token::LeftBrack);
@@ -59,17 +72,17 @@ impl Interpreter {
                 if let Token::RightBrack = self.tokens[self.line_index+1] {
                     break;
                 }
-                self.line_index += 1;
+                self.increase_line_index();
             }
-            self.line_index += 1;
+            self.increase_line_index();
             self.functions.insert(fn_name, fn_tokens);
         }
-        self.line_index += 1;
+        self.increase_line_index();
     }
 
     pub fn interpret(&mut self) {
         if let Token::Identifier(ident) = self.tokens[self.line_index].clone() {
-            self.line_index += 1;
+            self.increase_line_index();
             match ident.as_str() {
                 //function definition
                 "fn" => {
@@ -77,14 +90,14 @@ impl Interpreter {
                 }
 
                 var_name => {
-                    if self.peak(Token::Assign) {
+                    if self.peak(Token::Assign, 0) {
                         self.eat(Token::Assign);
                         let result = self.expression();
                         self.variables.insert(var_name.parse().unwrap(), result);
                         //variable assignment
                     }
                     //function call
-                    if self.peak(Token::LeftParen) {
+                    if self.peak(Token::LeftParen, 0) {
 
                     }
                     self.eat(Token::EOL);
@@ -99,20 +112,27 @@ impl Interpreter {
 
     fn eat(&mut self, t: Token) {
         if self.tokens[self.line_index].clone() == t {
-            self.line_index += 1;
+            self.increase_line_index();
         }
         else {
             println!("SYNTAX ERRROR! Expected {:?} at index {} (found {:?})", t, self.line_index, self.tokens[self.line_index].clone());
             exit(-1);
         }
     }
-    fn peak(&mut self, t: Token) -> bool {
-        if self.tokens[self.line_index].clone() == t {
+    fn peak(&mut self, t: Token, offset: usize) -> bool {
+        if self.tokens[self.line_index + offset].clone() == t {
             return true;
         }
         else {
             return false;
         }
+    }
+
+    fn increase_line_index(&mut self) {
+        self.line_index += 1;
+    }
+    fn decrease_line_index(&mut self) {
+        self.line_index -= 1;
     }
 
     pub fn print_debug(&self) {
