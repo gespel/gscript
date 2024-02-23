@@ -17,18 +17,16 @@ fn main() {
         x = y2 + y3;
         x2 = 1;
 
-        fn test() {
-            x = 0;
-            y = 1;
+        fn test(a, b) {
+            x = a + 1;
+            y = b + 1;
         }
         fn test2() {
             x1 = 2;
         }
+        test(5, 1);
         test();
-        test();
-        test2();
     ");
-    //println!("{:?}", l.tokenize());
     let mut i = Interpreter::new(l.tokenize(), HashMap::new());
     i.interpret();
     i.print_debug();

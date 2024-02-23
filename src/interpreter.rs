@@ -4,7 +4,7 @@ use crate::lexer::Token;
 pub struct Interpreter {
     tokens: Vec<Token>,
     line_index: usize,
-    functions: HashMap<String, Vec<Token>>,
+    functions: HashMap<String, (Vec<String>, Vec<Token>)>,
     variables: HashMap<String, f64>
 }
 
@@ -28,7 +28,15 @@ impl Interpreter {
                     0f64
                 }
                 else {
-                    self.variables.get(&var_name).unwrap().clone()
+                    match self.variables.get(&var_name) {
+                        None => {
+                            println!("Variable {var_name} not found in scope!");
+                            exit(-1);
+                        }
+                        Some(value) => {
+                            value.clone()
+                        }
+                    }
                 }
 
             }
@@ -40,7 +48,8 @@ impl Interpreter {
                 result
             }
             _ => {
-                panic!("Terminal parsing Error! Expected terminal but got {:?} instead!", self.tokens[self.line_index].clone());
+                println!("Terminal parsing Error! Expected terminal but got {:?} instead!", self.tokens[self.line_index].clone());
+                exit(-1);
             }
         }
     }
@@ -74,10 +83,34 @@ impl Interpreter {
         result
     }
 
+    fn parse_function_args(&mut self) -> Vec<String> {
+        let mut out: Vec<String> = Vec::new();
+        loop {
+            match self.tokens[self.line_index].clone() {
+                Token::Identifier(arg) => {
+                    out.push(arg);
+                }
+                Token::Number(arg) => {
+                    out.push(arg.to_string());
+                }
+                Token::Comma => {}
+                Token::RightParen => {
+                    break;
+                }
+                _ => {
+                    panic!("Error while parsing function arguments! Found {:?}", self.tokens[self.line_index].clone());
+                }
+            }
+            self.increase_line_index();
+        }
+        out
+    }
+
     fn function_definition(&mut self) {
         if let Token::Identifier(fn_name) = self.tokens[self.line_index].clone() {
             self.increase_line_index();
             self.eat(Token::LeftParen);
+            let mut fn_args: Vec<String> = self.parse_function_args();
             self.eat(Token::RightParen);
             self.eat(Token::LeftBrack);
             let mut fn_tokens: Vec<Token> = Vec::new();
@@ -89,7 +122,7 @@ impl Interpreter {
                 self.increase_line_index();
             }
             self.increase_line_index();
-            self.functions.insert(fn_name, fn_tokens);
+            self.functions.insert(fn_name, (fn_args, fn_tokens));
         }
         self.increase_line_index();
     }
@@ -113,8 +146,9 @@ impl Interpreter {
                     //function call
                     if self.peak(Token::LeftParen, 0) {
                         self.eat(Token::LeftParen);
+                        let fn_args: Vec<String> = self.parse_function_args();
                         self.eat(Token::RightParen);
-                        self.call_function(var_name.to_string());
+                        self.call_function(var_name.to_string(), fn_args);
                     }
                     self.eat(Token::EOL);
                 }
@@ -148,9 +182,15 @@ impl Interpreter {
         return self.tokens[self.line_index + offset].clone();
     }
 
-    fn call_function(&mut self, function_name: String) {
-        let function_vector: Vec<Token> = self.functions.get(&function_name).unwrap().clone();
-        let mut i = Interpreter::new(function_vector, HashMap::new());
+    fn call_function(&mut self, function_name: String, args: Vec<String>) {
+        let function_args: Vec<String> = self.functions.get(&function_name).unwrap().clone().0;
+        let function_vector: Vec<Token> = self.functions.get(&function_name).unwrap().clone().1;
+        let mut variables: HashMap<String, f64> = HashMap::new();
+        for i in 0..args.len() {
+            variables.insert(function_args[i].clone(), args[i].clone().parse().unwrap());
+        }
+
+        let mut i = Interpreter::new(function_vector, variables);
         i.interpret();
         i.print_debug();
     }
