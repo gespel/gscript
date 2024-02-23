@@ -9,12 +9,12 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
-    pub fn new(tokens: Vec<Token>) -> Interpreter {
+    pub fn new(tokens: Vec<Token>, args: HashMap<String, f64>) -> Interpreter {
         Interpreter {
             tokens,
             line_index: 0,
             functions: HashMap::new(),
-            variables: HashMap::new()
+            variables: args
         }
     }
 
@@ -112,7 +112,9 @@ impl Interpreter {
                     }
                     //function call
                     if self.peak(Token::LeftParen, 0) {
-
+                        self.eat(Token::LeftParen);
+                        self.eat(Token::RightParen);
+                        self.call_function(var_name.to_string());
                     }
                     self.eat(Token::EOL);
                 }
@@ -148,18 +150,9 @@ impl Interpreter {
 
     fn call_function(&mut self, function_name: String) {
         let function_vector: Vec<Token> = self.functions.get(&function_name).unwrap().clone();
-        for function_index in 0..function_vector.len() {
-            match function_vector[function_index].clone() {
-                Token::Identifier(name) => {
-                    if let Token::Assign = function_vector[function_index+1] {
-
-                    }
-                }
-                _ => {
-
-                }
-            }
-        }
+        let mut i = Interpreter::new(function_vector, HashMap::new());
+        i.interpret();
+        i.print_debug();
     }
 
     fn increase_line_index(&mut self) {

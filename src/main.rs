@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 #![allow(unused_mut)]
+
+use std::collections::HashMap;
 use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
 
@@ -22,9 +24,12 @@ fn main() {
         fn test2() {
             x1 = 2;
         }
+        test();
+        test();
+        test2();
     ");
     //println!("{:?}", l.tokenize());
-    let mut i = Interpreter::new(l.tokenize());
+    let mut i = Interpreter::new(l.tokenize(), HashMap::new());
     i.interpret();
     i.print_debug();
 }
