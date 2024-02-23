@@ -16,7 +16,6 @@ fn main() {
         y3 = y2 + ((4 + 1) - 2);
         x = y2 + y3;
         x2 = 1;
-
         fn test(a, b) {
             x = a + 1;
             y = b + 1;
@@ -25,7 +24,7 @@ fn main() {
             x1 = 2;
         }
         test(5, 1);
-        test();
+        test(1, 1);
     ");
     let mut i = Interpreter::new(l.tokenize(), HashMap::new());
     i.interpret();
