@@ -52,10 +52,24 @@ impl Interpreter {
             if self.peak(Token::EOL, 0) || self.peak(Token::RightParen, 0) {
                 break;
             }
-            self.eat(Token::Plus);
-            let result2 = self.terminal();
-            self.increase_line_index();
-            result += result2;
+            match self.look(0) {
+                Token::Plus => {
+                    self.eat(Token::Plus);
+                    let result2 = self.terminal();
+                    self.increase_line_index();
+                    result += result2;
+                }
+                Token::Minus => {
+                    self.eat(Token::Minus);
+                    let result2 = self.terminal();
+                    self.increase_line_index();
+                    result -= result2;
+                }
+                _ => {
+
+                }
+            }
+
         }
         result
     }
@@ -125,6 +139,26 @@ impl Interpreter {
         }
         else {
             return false;
+        }
+    }
+
+    fn look(&mut self, offset: usize) -> Token {
+        return self.tokens[self.line_index + offset].clone();
+    }
+
+    fn call_function(&mut self, function_name: String) {
+        let function_vector: Vec<Token> = self.functions.get(&function_name).unwrap().clone();
+        for function_index in 0..function_vector.len() {
+            match function_vector[function_index].clone() {
+                Token::Identifier(name) => {
+                    if let Token::Assign = function_vector[function_index+1] {
+
+                    }
+                }
+                _ => {
+
+                }
+            }
         }
     }
 

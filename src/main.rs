@@ -11,7 +11,7 @@ mod interpreter;
 fn main() {
     let mut l = Lexer::new("
         y2 = 1 + 1;
-        y3 = y2 + ((4 + 1) + 2);
+        y3 = y2 + ((4 + 1) - 2);
         x = y2 + y3;
         x2 = 1;
 
